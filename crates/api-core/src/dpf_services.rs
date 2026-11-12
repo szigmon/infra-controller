@@ -1125,13 +1125,13 @@ mod tests {
                 expected_nads
             );
             for (name, nad) in &rendered_nads {
-                // Match each NAD to its service contract; HBN's network carries jumbo frames.
-                let (expected_bridge, expected_mtu) = if name == "mybrhbn" {
-                    ("br-hbn", DOCA_HBN_SERVICE_NAD_MTU)
-                } else if name == "service-vpc-dhcp-slot0" {
-                    ("br-svc-0", 1500)
-                } else {
-                    ("br-sfc", 1500)
+                // Match each NAD to its service contract, including HBN's jumbo-MTU network.
+                let (expected_bridge, expected_mtu) = match name.as_str() {
+                    "mybrhbn" => ("br-hbn", DOCA_HBN_SERVICE_NAD_MTU),
+                    "service-vpc-dhcp-slot0" => ("br-svc-0", 1500),
+                    DHCP_SERVER_SERVICE_NAD_NAME => ("br-sfc", DHCP_SERVER_SERVICE_MTU),
+                    FMDS_SERVICE_NAD_NAME => ("br-sfc", FMDS_SERVICE_MTU),
+                    _ => unreachable!("rendered NAD names were checked above"),
                 };
                 assert_eq!(nad.metadata.name.as_deref(), Some(name.as_str()));
                 assert_eq!(nad.spec.bridge.as_deref(), Some(expected_bridge));
